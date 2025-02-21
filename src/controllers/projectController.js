@@ -345,7 +345,7 @@ exports.getEmployeeProjects = async (req, res) => {
 
     // Fetch projects
     const [projects] = await db.query(`
-      SELECT p.id, p.name, p.description, p.location, p.start_date, p.end_date, p.budget, p.status,
+      SELECT p.id, p.name, p.description, p.location, p.start_date, p.end_date, p.budget, p.status
       FROM projects p
       JOIN assign_employee ae ON p.id = ae.project_id
       WHERE ae.employee_id = ?
