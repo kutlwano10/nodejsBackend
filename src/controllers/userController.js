@@ -1,13 +1,13 @@
 const db = require('../config/db');
 
-exports.getUsers = (req, res) => {
-  db.query('SELECT * FROM users', (err, results) => {
-    if (err) {
-      console.error('Database error:', err);
-      return res.status(500).json({ error: 'Server error' });
-    }
+exports.getUsers = async (req, res) => {
+  try {
+    const [results] = await db.query("SELECT * FROM users"); // ✅ Use await
     res.status(200).json({ success: true, data: results });
-  });
+  } catch (err) {
+    console.error("Database error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
 };
 
 exports.getEmployees = (req, res) => {
