@@ -10,7 +10,7 @@ router.post('/log-hours', projectController.logEmployeeHours)
 router.get('/:projectId/employees', projectController.getEmployeesByProjectId)
 router.get('/all', projectController.getProjects);
 router.get('/:employee_id/my-projects', projectController.getEmployeeProjects)
-router.get('/my-logged-hours', projectController.getEmployeeHours)
+router.get('/:employee_id/projects/:project_id/hours', projectController.getEmployeeProjectHours)
 router.get('/:id', projectController.getProjectById)
 
 

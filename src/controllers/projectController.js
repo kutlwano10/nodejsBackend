@@ -276,54 +276,62 @@ exports.logEmployeeHours = async (req, res) => {
     res.status(500).json({ error: "Failed to log hours" });
   }
 };
+/**
+ * Get all hours worked by an employee on a specific project
+ * @param {*} req 
+ * @param {*} res 
+ * @returns 
+ */
+exports.getEmployeeProjectHours = async (req, res) => {
+  const { employee_id, project_id } = req.params;
 
-exports.getEmployeeHours = async (req, res) => {
-  const { employee_id, project_id, start_date, end_date } = req.query;
-
-  // Validate required fields
+  // Validation
   if (!employee_id || !project_id) {
     return res.status(400).json({ error: "Employee ID and Project ID are required" });
   }
 
-  // Optional date range validation
-  if (start_date && !/^\d{4}-\d{2}-\d{2}$/.test(start_date)) {
-    return res.status(400).json({ error: "Start date must be in the format YYYY-MM-DD" });
-  }
-
-  if (end_date && !/^\d{4}-\d{2}-\d{2}$/.test(end_date)) {
-    return res.status(400).json({ error: "End date must be in the format YYYY-MM-DD" });
-  }
-
-  // Construct the query
-  let query = `
-    SELECT * FROM employee_hours 
-    WHERE employee_id = ? 
-    AND project_id = ?
-  `;
-  const queryParams = [employee_id, project_id];
-
-  // Add date range filter if provided
-  if (start_date && end_date) {
-    query += " AND work_date BETWEEN ? AND ?";
-    queryParams.push(start_date, end_date);
-  } else if (start_date) {
-    query += " AND work_date >= ?";
-    queryParams.push(start_date);
-  } else if (end_date) {
-    query += " AND work_date <= ?";
-    queryParams.push(end_date);
-  }
-
-  // Execute the query
   try {
-    const [results] = await db.query(query, queryParams);
+    // Check existence of employee and project
+    const [[existenceResults]] = await db.query(`
+      SELECT 
+        (SELECT COUNT(*) FROM users WHERE id = ?) as user_exists,
+        (SELECT COUNT(*) FROM projects WHERE id = ?) as project_exists
+    `, [employee_id, project_id]);
+
+    // Check if employee and project exist
+    if (existenceResults.user_exists === 0) {
+      return res.status(404).json({ error: "Employee not found" });
+    }
+
+    if (existenceResults.project_exists === 0) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    // Check if employee is assigned to the project
+    const [assignments] = await db.query(`
+      SELECT * FROM assign_employee 
+      WHERE employee_id = ? AND project_id = ?
+    `, [employee_id, project_id]);
+
+    if (assignments.length === 0) {
+      return res.status(403).json({ error: "Employee is not assigned to this project" });
+    }
+
+    // Fetch all hours logged for the employee on the project
+    const [hours] = await db.query(`
+      SELECT * FROM employee_hours 
+      WHERE employee_id = ? 
+      AND project_id = ?
+      ORDER BY work_date ASC
+    `, [employee_id, project_id]);
+
     res.status(200).json({
-      message: "Employee hours fetched successfully",
-      data: results,
+      success: true,
+      data: hours,
     });
   } catch (error) {
-    console.error("Database error fetching employee hours:", error);
-    res.status(500).json({ error: "Database error fetching employee hours" });
+    console.error("Failed to fetch employee project hours:", error);
+    res.status(500).json({ error: "Failed to fetch employee project hours" });
   }
 };
 
