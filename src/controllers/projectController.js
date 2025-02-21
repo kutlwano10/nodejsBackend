@@ -58,6 +58,29 @@ exports.createProject = async (req, res) => {
 };
 
 
+// Get project by ID
+exports.getProjectById = async (req, res) => {
+  const projectId = req.params.id;
+
+  const projectQuery = `
+    SELECT * FROM projects WHERE id = ?
+  `;
+
+  try {
+    const [projectResult] = await db.query(projectQuery, [projectId]);
+
+    if (projectResult.length === 0) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    res.status(200).json({ project: projectResult[0] });
+  } catch (error) {
+    console.error("Database error:", error);
+    res.status(500).json({ error: "Server Error" });
+  }
+};
+
+
 exports.getEmployeesByProjectId = async (req, res) => {
   const { projectId } = req.params;
 
