@@ -57,10 +57,11 @@ exports.createProject = async (req, res) => {
   }
 };
 
-
 // Get project by ID
 exports.getProjectById = async (req, res) => {
   const projectId = req.params.id;
+
+  console.log("Fetching project with ID:", projectId); // Debugging log
 
   const projectQuery = `
     SELECT * FROM projects WHERE id = ?
@@ -68,6 +69,8 @@ exports.getProjectById = async (req, res) => {
 
   try {
     const [projectResult] = await db.query(projectQuery, [projectId]);
+
+    console.log("Project Query Result:", projectResult); // Debugging log
 
     if (projectResult.length === 0) {
       return res.status(404).json({ error: "Project not found" });
