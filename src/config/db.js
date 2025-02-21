@@ -1,22 +1,19 @@
-// src/config/db.js
-const mysql = require('mysql2');
-const dotenv = require('dotenv');
+const mysql = require("mysql2/promise"); // ✅ Remove `.js`
+const dotenv = require("dotenv");
 
 dotenv.config();
 
-const db = mysql.createConnection({
+// Create a MySQL connection pool
+const pool = mysql.createPool({
   host: process.env.DATABASE_HOST,
   user: process.env.DATABASE_USER,
   password: process.env.DATABASE_PASSWORD,
   database: process.env.DATABASE,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
 });
 
-db.connect((error) => {
-  if (error) {
-    console.error('Database connection failed:', error);
-  } else {
-    console.log('MySQL connected...');
-  }
-});
+console.log("✅ MySQL Pool created...");
 
-module.exports = db;
+module.exports = pool; // ✅ No `.promise()`
