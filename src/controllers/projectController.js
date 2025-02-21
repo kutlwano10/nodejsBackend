@@ -165,6 +165,7 @@ exports.getProjects = async (req, res) => {
 exports.getProjectById = async (req, res) => {
   const projectId = req.params.id; // Assuming the ID is passed as a URL parameter
 
+  console.log("requested", projectId)
   if (!projectId) {
     return res.status(400).json({ error: "Project ID is required" });
   }
