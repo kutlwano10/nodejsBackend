@@ -57,32 +57,6 @@ exports.createProject = async (req, res) => {
   }
 };
 
-// Get project by ID
-exports.getProjectById = async (req, res) => {
-  const projectId = req.params.id;
-
-  console.log("Fetching project with ID:", projectId); // Debugging log
-
-  const projectQuery = `
-    SELECT * FROM projects WHERE id = ?
-  `;
-
-  try {
-    const [projectResult] = await db.query(projectQuery, [projectId]);
-
-    console.log("Project Query Result:", projectResult); // Debugging log
-
-    if (projectResult.length === 0) {
-      return res.status(404).json({ error: "Project not found" });
-    }
-
-    res.status(200).json({ project: projectResult[0] });
-  } catch (error) {
-    console.error("Database error:", error);
-    res.status(500).json({ error: "Server Error" });
-  }
-};
-
 
 exports.getEmployeesByProjectId = async (req, res) => {
   const { projectId } = req.params;
@@ -184,6 +158,28 @@ exports.getProjects = async (req, res) => {
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ error: "Failed to fetch projects" });
+  }
+};
+
+
+exports.getProjectById = async (req, res) => {
+  const projectId = req.params.id; // Assuming the ID is passed as a URL parameter
+
+  if (!projectId) {
+    return res.status(400).json({ error: "Project ID is required" });
+  }
+
+  try {
+    const [results] = await db.query("SELECT * FROM projects WHERE id = ?", [projectId]);
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    res.status(200).json({ success: true, data: results[0] });
+  } catch (err) {
+    console.error("Database error:", err);
+    res.status(500).json({ error: "Failed to fetch project" });
   }
 };
 
