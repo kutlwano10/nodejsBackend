@@ -1,6 +1,6 @@
-const db = require('../config/db');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const db = require("../config/db");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 exports.register = async (req, res) => {
   const {
@@ -16,51 +16,46 @@ exports.register = async (req, res) => {
     gender,
   } = req.body;
 
-  // Check if user already exists
-  db.query('SELECT * FROM users WHERE email = ?', [email], async (err, result) => {
-    if (err) return res.status(500).json({ error: 'Database error' });
+  try {
+    // Check if user already exists
+    const [existingUsers] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
 
-    if (result.length > 0) {
-      return res.status(400).json({ error: 'Email already exists' });
+    if (existingUsers.length > 0) {
+      return res.status(400).json({ error: "Email already exists" });
     }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Register the user
-    try {
-      const hashedPassword = await bcrypt.hash(password, 10);
+    await db.query(
+      "INSERT INTO users (name, email, password, role, position, location, idNumber, race, phoneNumber, gender) VALUES (?,?,?,?,?,?,?,?,?,?)",
+      [name, email, hashedPassword, role, position, location, idNumber, race, phoneNumber, gender]
+    );
 
-      db.query(
-        'INSERT INTO users (name, email, password, role, position, location, idNumber, race, phoneNumber, gender) VALUES (?,?,?,?,?,?,?,?,?,?)',
-        [name, email, hashedPassword, role, position, location, idNumber, race, phoneNumber, gender],
-        (err, result) => {
-          if (err) return res.status(500).json({ error: 'Error registering user' });
-          res.status(201).json({ message: 'User Registered Successfully' });
-        }
-      );
-    } catch (error) {
-      res.status(500).json({ error: 'Server Error' });
-    }
-  });
+    res.status(201).json({ message: "User Registered Successfully" });
+
+  } catch (error) {
+    console.error("Database error:", error);
+    res.status(500).json({ error: "Server Error" });
+  }
 };
 
-exports.login = (req, res) => {
+exports.login = async (req, res) => {
   const { email, password, role } = req.body;
 
-  if (!email || !password || !role)
-    // FIXED CONDITION
+  if (!email || !password || !role) {
     return res.status(400).json({ error: "All fields are required!" });
+  }
 
-  const query = "SELECT * FROM users WHERE email = ?";
+  try {
+    const [users] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
 
-  db.query(query, [email], async (err, results) => {
-    if (err) {
-      console.error("Database error:", err);
-      return res.status(500).json({ error: "Server error" });
-    }
-    if (results.length === 0) {
-      return res.status(401).json({ errors: "Invalid email or password" });
+    if (users.length === 0) {
+      return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    const user = results[0];
+    const user = users[0];
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
@@ -77,7 +72,10 @@ exports.login = (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN }
     );
 
-    return res.json({ message: "Login successful", token, user });
-  })
-};
+    res.json({ message: "Login successful", token, user });
 
+  } catch (error) {
+    console.error("Database error:", error);
+    res.status(500).json({ error: "Server Error" });
+  }
+};
