@@ -1,4 +1,4 @@
-
+const db = require('../config/db')
 /**Get all hours worked */
 exports.getAllEmployeeHours = async (req, res) => {
     try {
