@@ -12,7 +12,6 @@ router.get('/all', projectController.getProjects);
 router.get('/:employee_id/my-projects', projectController.getEmployeeProjects)
 router.get('/:employee_id/projects/:project_id/hours', projectController.getEmployeeProjectHours)
 router.get('/:id', projectController.getProjectById)
-router.get('/employee-hours', projectController.getAllEmployeeHours)
 
 
 

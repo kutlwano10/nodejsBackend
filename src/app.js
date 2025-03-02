@@ -5,6 +5,7 @@ const pool = require("./config/db"); // Import MySQL pool
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const projectRoutes = require("./routes/projectRoutes");
+const employeeRoutes = require("./routes/employeeRoutes")
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/projects", projectRoutes);
+app.use("/employee", employeeRoutes)
 
 // Keep MySQL Connection Alive
 setInterval(async () => {

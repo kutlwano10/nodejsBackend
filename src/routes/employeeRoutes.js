@@ -1,15 +1,9 @@
-// const express = require('express')
-// // const employeeHoursController =require("../controllers/employeeHoursController")
-// const employeeHoursController = require('../controllers/employeeHoursController')
+const express = require('express')
 
+const employeeHoursController = require('../controllers/employeeHoursController')
 
-// // const verifyProjectAssignment = require('../middleware/protectAssignment');
+const router = express.Router()
 
-// const router = express.Router()
+router.get('/employee-hours', employeeHoursController.getAllEmployeeHours)
 
-// router.post(
-//   '/hours/log', employeeHoursController.logEmployeeHours
-  
-// );
-
-// module.exports = router;
+module.exports = router
