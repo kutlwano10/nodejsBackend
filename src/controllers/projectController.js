@@ -153,7 +153,34 @@ exports.assignEmployeeToProject = async (req, res) => {
  */
 exports.getProjects = async (req, res) => {
   try {
-    const [results] = await db.query("SELECT * FROM projects");
+    // Extract query parameters
+    const { limit = 10, offset = 0, status, search } = req.query;
+
+    // Base SQL query
+    let sql = "SELECT * FROM projects";
+    const params = [];
+
+    // Add filtering by status (if provided)
+    if (status) {
+      sql += " WHERE status = ?";
+      params.push(status);
+    }
+
+    // Add search by project name or description (if provided)
+    if (search) {
+      sql += status ? " AND" : " WHERE";
+      sql += " (name LIKE ? OR description LIKE ?)";
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    // Add pagination (limit and offset)
+    sql += " LIMIT ? OFFSET ?";
+    params.push(parseInt(limit), parseInt(offset));
+
+    // Execute the query
+    const [results] = await db.query(sql, params);
+
+    // Send the response
     res.status(200).json({ success: true, data: results });
   } catch (err) {
     console.error("Database error:", err);
