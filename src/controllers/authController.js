@@ -1,6 +1,55 @@
 const db = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const email = req.body;
+
+    db.query(
+      "SELECT * FROM users WHERE email = ?",
+      [email],
+      async (error, results) => {
+        if (error) {
+          return res.status(500).json({ message: "Database error", error });
+        }
+        if (results.length === 0) {
+          return res.status(404).json({ message: "User Not Found" });
+        }
+        const token = crypto.randomBytes(32).toString("hex");
+        const hashedToken = await bcrypt.hash(token, 10);
+
+        // storing the token on to the database
+        db.query(
+          "INSERT INTO password_reset (email, token) VALUES (?, ?) ON DUPLICATE KEY UPDATE token = ?, created_at = NOW()",
+          [email, hashedToken, hashedToken]
+        );
+
+        const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+        });
+
+        await transporter.sendMail({
+          from: process.env.EMAIL_USER,
+          to: email,
+          subject: "Password reset request ",
+          html: `<p>Click <a href="${resetLink}"> here</a> to reset your password .</p>`,
+        });
+        res.json({message : "Password reset link sent to your email"})
+      }
+    );
+  } catch (error) {
+    res.status(500).json({message: "server Error", error})
+  }
+};
 
 exports.register = async (req, res) => {
   const {
@@ -18,7 +67,10 @@ exports.register = async (req, res) => {
 
   try {
     // Check if user already exists
-    const [existingUsers] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
+    const [existingUsers] = await db.query(
+      "SELECT * FROM users WHERE email = ?",
+      [email]
+    );
 
     if (existingUsers.length > 0) {
       return res.status(400).json({ error: "Email already exists" });
@@ -30,11 +82,21 @@ exports.register = async (req, res) => {
     // Register the user
     await db.query(
       "INSERT INTO users (name, email, password, role, position, location, idNumber, race, phoneNumber, gender) VALUES (?,?,?,?,?,?,?,?,?,?)",
-      [name, email, hashedPassword, role, position, location, idNumber, race, phoneNumber, gender]
+      [
+        name,
+        email,
+        hashedPassword,
+        role,
+        position,
+        location,
+        idNumber,
+        race,
+        phoneNumber,
+        gender,
+      ]
     );
 
     res.status(201).json({ message: "User Registered Successfully" });
-
   } catch (error) {
     console.error("Database error:", error);
     res.status(500).json({ error: "Server Error" });
@@ -49,7 +111,9 @@ exports.login = async (req, res) => {
   }
 
   try {
-    const [users] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
+    const [users] = await db.query("SELECT * FROM users WHERE email = ?", [
+      email,
+    ]);
 
     if (users.length === 0) {
       return res.status(401).json({ error: "Invalid email or password" });
@@ -73,7 +137,6 @@ exports.login = async (req, res) => {
     );
 
     res.json({ message: "Login successful", token, user });
-
   } catch (error) {
     console.error("Database error:", error);
     res.status(500).json({ error: "Server Error" });
