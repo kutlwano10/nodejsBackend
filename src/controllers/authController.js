@@ -30,7 +30,9 @@ exports.forgotPassword = async (req, res) => {
         const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
         const transporter = nodemailer.createTransport({
-          service: "gmail",
+          host: process.env.EMAIL_HOST, // SMTP host
+          port: process.env.EMAIL_PORT, // SMTP port
+          secure: false, // true for port 465, false for 587
           auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
