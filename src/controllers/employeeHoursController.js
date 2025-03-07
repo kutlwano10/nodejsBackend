@@ -63,3 +63,63 @@ exports.getAllEmployeeHours = async (req, res) => {
       res.status(500).json({ error: "Failed to delete logged hours" });
     }
   };
+
+
+  exports.updateEmployeeHours = async (req, res) => {
+    const { id } = req.params; // Get the ID from the URL parameters
+    const { hours_worked, work_date, description } = req.body; // Get updated data from the request body
+  
+    // Validate the ID
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({ error: "Invalid ID provided" });
+    }
+  
+    // Validate the input
+    if (!hours_worked || !work_date) {
+      return res.status(400).json({ error: "Hours worked and work date are required" });
+    }
+  
+    // Validate hours_worked
+    const hoursNum = parseFloat(hours_worked);
+    if (isNaN(hoursNum) || hoursNum <= 0 || hoursNum > 24) {
+      return res.status(400).json({ error: "Hours worked must be a number between 0 and 24" });
+    }
+  
+    // Validate work_date format (optional)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/; // YYYY-MM-DD
+    if (!dateRegex.test(work_date)) {
+      return res.status(400).json({ error: "Work date must be in the format YYYY-MM-DD" });
+    }
+  
+    try {
+      // Check if the entry exists
+      const [existingEntry] = await db.query(
+        "SELECT * FROM employee_hours WHERE id = ?",
+        [id]
+      );
+  
+      if (existingEntry.length === 0) {
+        return res.status(404).json({ error: "Logged hours entry not found" });
+      }
+  
+      // Update the entry
+      await db.query(
+        "UPDATE employee_hours SET hours_worked = ?, work_date = ?, description = ? WHERE id = ?",
+        [hoursNum, work_date, description || null, id]
+      );
+  
+      // Fetch the updated entry
+      const [updatedEntry] = await db.query(
+        "SELECT * FROM employee_hours WHERE id = ?",
+        [id]
+      );
+  
+      res.status(200).json({
+        message: "Logged hours updated successfully",
+        data: updatedEntry[0], // Return the updated entry
+      });
+    } catch (error) {
+      console.error("Failed to update logged hours:", error);
+      res.status(500).json({ error: "Failed to update logged hours" });
+    }
+  };
