@@ -194,6 +194,6 @@ exports.getAllEmployeeHours = async (req, res) => {
       });
     } catch (error) {
       console.error("Error updating timesheet:", error);
-      res.status(500).json({ error: "Failed to update timesheet" });
+      res.status(500).json({ error: "Failed to update timesheet", details: error.message });
     }
   }
