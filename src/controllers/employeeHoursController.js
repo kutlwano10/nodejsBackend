@@ -190,7 +190,7 @@ exports.getAllEmployeeHours = async (req, res) => {
       // Send success response
       res.status(200).json({
         message: "Timesheet updated successfully",
-        updated_projects: updatedProjects,
+        data: updatedProjects,
       });
     } catch (error) {
       console.error("Error updating timesheet:", error);
