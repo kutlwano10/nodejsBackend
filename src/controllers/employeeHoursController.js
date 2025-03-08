@@ -146,7 +146,7 @@ exports.getAllEmployeeHours = async (req, res) => {
       // Loop through each project ID
       for (const project_id of project_ids) {
         // Step 1: Fetch all logged hours for the employee and project
-        const [fetchResult] = await pool.query(
+        const [fetchResult] = await db.query(
           `SELECT SUM(hours_worked) AS total_hours
            FROM employee_hours
            WHERE employee_id = ? AND project_id = ?`,
@@ -156,7 +156,7 @@ exports.getAllEmployeeHours = async (req, res) => {
         const total_hours = parseFloat(fetchResult[0].total_hours) || 0;
   
         // Step 2: Check if the project exists in the timesheet
-        const [checkResult] = await pool.query(
+        const [checkResult] = await db.query(
           `SELECT id
            FROM employee_timesheet
            WHERE employee_id = ? AND project_id = ?`,
@@ -165,7 +165,7 @@ exports.getAllEmployeeHours = async (req, res) => {
   
         if (checkResult.length > 0) {
           // Step 3: Update existing entry
-          await pool.query(
+          await db.query(
             `UPDATE employee_timesheet
              SET total_hours = ?, updated_at = CURRENT_TIMESTAMP
              WHERE id = ?`,
@@ -173,7 +173,7 @@ exports.getAllEmployeeHours = async (req, res) => {
           );
         } else {
           // Step 4: Insert new entry
-          await pool.query(
+          await db.query(
             `INSERT INTO employee_timesheet (employee_id, project_id, total_hours)
              VALUES (?, ?, ?)`,
             [employee_id, project_id, total_hours]
