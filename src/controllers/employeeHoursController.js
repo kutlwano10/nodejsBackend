@@ -197,3 +197,37 @@ exports.getAllEmployeeHours = async (req, res) => {
       res.status(500).json({ error: "Failed to update timesheet", details: error.message });
     }
   }
+
+
+  exports.getEmployeeTimesheet = async (req, res) => {
+    const { employee_id } = req.query;
+  
+    // Validate request query
+    if (!employee_id) {
+      return res.status(400).json({ error: "employee_id is required" });
+    }
+  
+    try {
+      // Fetch timesheet data for the employee
+      const [timesheetData] = await db.query(
+        `SELECT project_id, total_hours, created_at, updated_at
+         FROM employee_timesheet
+         WHERE employee_id = ?`,
+        [employee_id]
+      );
+  
+      // Check if data exists
+      if (timesheetData.length === 0) {
+        return res.status(404).json({ message: "No timesheet data found for the employee" });
+      }
+  
+      // Send success response with timesheet data
+      res.status(200).json({
+        message: "Timesheet data retrieved successfully",
+        data: timesheetData,
+      });
+    } catch (error) {
+      console.error("Error fetching timesheet data:", error);
+      res.status(500).json({ error: "Failed to fetch timesheet data", details: error.message });
+    }
+  };
