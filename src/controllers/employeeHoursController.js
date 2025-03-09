@@ -210,7 +210,7 @@ exports.getAllEmployeeHours = async (req, res) => {
     try {
       // Fetch timesheet data for the employee
       const [timesheetData] = await db.query(
-        `SELECT project_id, total_hours, created_at, updated_at
+        `SELECT project_id, total_hours, updated_at
          FROM employee_timesheet
          WHERE employee_id = ?`,
         [employee_id]
